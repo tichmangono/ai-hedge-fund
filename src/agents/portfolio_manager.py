@@ -2,6 +2,7 @@ import json
 from langchain_core.messages import HumanMessage
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_openai.chat_models import ChatOpenAI
+import traceback
 
 from graph.state import AgentState, show_agent_reasoning
 from pydantic import BaseModel, Field
@@ -166,7 +167,25 @@ def make_decision(prompt, tickers):
             result = llm.invoke(prompt)
             return result
         except Exception as e:
+            error_summary = f"Error type: {type(e).__name__}, Message: {str(e)}"
+            error_trace = traceback.format_exc()
+            
+            print(f"\nError in Portfolio Management:")
+            print(f"Summary: {error_summary}")
+            print("\nFull trace:")
+            print(error_trace)
+            
             progress.update_status("portfolio_management_agent", None, f"Error - retry {attempt + 1}/{max_retries}")
+            
             if attempt == max_retries - 1:
-                # On final attempt, return a safe default
-                return PortfolioManagerOutput(decisions={ticker: PortfolioDecision(action="hold", quantity=0, confidence=0.0, reasoning="Error in portfolio management, defaulting to hold") for ticker in tickers})
+                # On final attempt, return a safe default with detailed error info
+                return PortfolioManagerOutput(
+                    decisions={
+                        ticker: PortfolioDecision(
+                            action="hold",
+                            quantity=0,
+                            confidence=0.0,
+                            reasoning=f"Analysis failed after {max_retries} attempts. Error: {error_summary}"
+                        ) for ticker in tickers
+                    }
+                )

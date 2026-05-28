@@ -11,6 +11,7 @@ from pydantic import BaseModel
 import json
 from typing_extensions import Literal
 from utils.progress import progress
+import traceback
 
 
 class BuffettSignal(BaseModel):
@@ -340,7 +341,6 @@ def generate_buffett_output(ticker: str, analysis_data: dict[str, any]) -> Buffe
         "ticker": ticker
     })
 
-
     llm = ChatOpenAI(model="gpt-4o").with_structured_output(
         BuffettSignal,
         method="function_calling",
@@ -353,9 +353,18 @@ def generate_buffett_output(ticker: str, analysis_data: dict[str, any]) -> Buffe
             return result
         except Exception as e:
             if attempt == max_retries - 1:
-                # On final attempt, return a safe default
+                # Get both human readable and full trace
+                error_summary = f"Error type: {type(e).__name__}, Message: {str(e)}"
+                error_trace = traceback.format_exc()
+                
+                print(f"\nError in Warren Buffett analysis for {ticker}:")
+                print(f"Summary: {error_summary}")
+                print("\nFull trace:")
+                print(error_trace)
+                
                 return BuffettSignal(
-                    signal="hold",
+                    signal="neutral",
                     confidence=0.0,
-                    reasoning="Error in analysis, defaulting to hold"
+                    reasoning=f"Analysis failed after {max_retries} attempts. Error: {error_summary}"
                 )
+            continue

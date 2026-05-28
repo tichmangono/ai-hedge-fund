@@ -1,4 +1,5 @@
 import math
+import traceback
 
 from langchain_core.messages import HumanMessage
 
@@ -31,91 +32,108 @@ def technical_analyst_agent(state: AgentState):
     technical_analysis = {}
 
     for ticker in tickers:
-        progress.update_status("technical_analyst_agent", ticker, "Analyzing price data")
+        try:
+            progress.update_status("technical_analyst_agent", ticker, "Analyzing price data")
 
-        # Get the historical price data
-        prices = get_prices(
-            ticker=ticker,
-            start_date=start_date,
-            end_date=end_date,
-        )
+            # Get the historical price data
+            prices = get_prices(
+                ticker=ticker,
+                start_date=start_date,
+                end_date=end_date,
+            )
 
-        if not prices:
-            progress.update_status("technical_analyst_agent", ticker, "Failed: No price data found")
+            if not prices:
+                progress.update_status("technical_analyst_agent", ticker, "Failed: No price data found")
+                continue
+
+            # Convert prices to a DataFrame
+            prices_df = prices_to_df(prices)
+
+            progress.update_status("technical_analyst_agent", ticker, "Calculating trend signals")
+            trend_signals = calculate_trend_signals(prices_df)
+
+            progress.update_status("technical_analyst_agent", ticker, "Calculating mean reversion")
+            mean_reversion_signals = calculate_mean_reversion_signals(prices_df)
+
+            progress.update_status("technical_analyst_agent", ticker, "Calculating momentum")
+            momentum_signals = calculate_momentum_signals(prices_df)
+
+            progress.update_status("technical_analyst_agent", ticker, "Analyzing volatility")
+            volatility_signals = calculate_volatility_signals(prices_df)
+
+            progress.update_status("technical_analyst_agent", ticker, "Statistical analysis")
+            stat_arb_signals = calculate_stat_arb_signals(prices_df)
+
+            # Combine all signals using a weighted ensemble approach
+            strategy_weights = {
+                "trend": 0.25,
+                "mean_reversion": 0.20,
+                "momentum": 0.25,
+                "volatility": 0.15,
+                "stat_arb": 0.15,
+            }
+
+            progress.update_status("technical_analyst_agent", ticker, "Combining signals")
+            combined_signal = weighted_signal_combination(
+                {
+                    "trend": trend_signals,
+                    "mean_reversion": mean_reversion_signals,
+                    "momentum": momentum_signals,
+                    "volatility": volatility_signals,
+                    "stat_arb": stat_arb_signals,
+                },
+                strategy_weights,
+            )
+
+            # Generate detailed analysis report for this ticker
+            technical_analysis[ticker] = {
+                "signal": combined_signal["signal"],
+                "confidence": round(combined_signal["confidence"] * 100),
+                "strategy_signals": {
+                    "trend_following": {
+                        "signal": trend_signals["signal"],
+                        "confidence": round(trend_signals["confidence"] * 100),
+                        "metrics": normalize_pandas(trend_signals["metrics"]),
+                    },
+                    "mean_reversion": {
+                        "signal": mean_reversion_signals["signal"],
+                        "confidence": round(mean_reversion_signals["confidence"] * 100),
+                        "metrics": normalize_pandas(mean_reversion_signals["metrics"]),
+                    },
+                    "momentum": {
+                        "signal": momentum_signals["signal"],
+                        "confidence": round(momentum_signals["confidence"] * 100),
+                        "metrics": normalize_pandas(momentum_signals["metrics"]),
+                    },
+                    "volatility": {
+                        "signal": volatility_signals["signal"],
+                        "confidence": round(volatility_signals["confidence"] * 100),
+                        "metrics": normalize_pandas(volatility_signals["metrics"]),
+                    },
+                    "statistical_arbitrage": {
+                        "signal": stat_arb_signals["signal"],
+                        "confidence": round(stat_arb_signals["confidence"] * 100),
+                        "metrics": normalize_pandas(stat_arb_signals["metrics"]),
+                    },
+                },
+            }
+            progress.update_status("technical_analyst_agent", ticker, "Done")
+
+        except Exception as e:
+            error_summary = f"Error type: {type(e).__name__}, Message: {str(e)}"
+            error_trace = traceback.format_exc()
+            
+            print(f"\nError in Technical Analysis for {ticker}:")
+            print(f"Summary: {error_summary}")
+            print("\nFull trace:")
+            print(error_trace)
+            
+            technical_analysis[ticker] = {
+                "signal": "neutral",
+                "confidence": 0.0,
+                "reasoning": f"Analysis failed. Error: {error_summary}"
+            }
             continue
-
-        # Convert prices to a DataFrame
-        prices_df = prices_to_df(prices)
-
-        progress.update_status("technical_analyst_agent", ticker, "Calculating trend signals")
-        trend_signals = calculate_trend_signals(prices_df)
-
-        progress.update_status("technical_analyst_agent", ticker, "Calculating mean reversion")
-        mean_reversion_signals = calculate_mean_reversion_signals(prices_df)
-
-        progress.update_status("technical_analyst_agent", ticker, "Calculating momentum")
-        momentum_signals = calculate_momentum_signals(prices_df)
-
-        progress.update_status("technical_analyst_agent", ticker, "Analyzing volatility")
-        volatility_signals = calculate_volatility_signals(prices_df)
-
-        progress.update_status("technical_analyst_agent", ticker, "Statistical analysis")
-        stat_arb_signals = calculate_stat_arb_signals(prices_df)
-
-        # Combine all signals using a weighted ensemble approach
-        strategy_weights = {
-            "trend": 0.25,
-            "mean_reversion": 0.20,
-            "momentum": 0.25,
-            "volatility": 0.15,
-            "stat_arb": 0.15,
-        }
-
-        progress.update_status("technical_analyst_agent", ticker, "Combining signals")
-        combined_signal = weighted_signal_combination(
-            {
-                "trend": trend_signals,
-                "mean_reversion": mean_reversion_signals,
-                "momentum": momentum_signals,
-                "volatility": volatility_signals,
-                "stat_arb": stat_arb_signals,
-            },
-            strategy_weights,
-        )
-
-        # Generate detailed analysis report for this ticker
-        technical_analysis[ticker] = {
-            "signal": combined_signal["signal"],
-            "confidence": round(combined_signal["confidence"] * 100),
-            "strategy_signals": {
-                "trend_following": {
-                    "signal": trend_signals["signal"],
-                    "confidence": round(trend_signals["confidence"] * 100),
-                    "metrics": normalize_pandas(trend_signals["metrics"]),
-                },
-                "mean_reversion": {
-                    "signal": mean_reversion_signals["signal"],
-                    "confidence": round(mean_reversion_signals["confidence"] * 100),
-                    "metrics": normalize_pandas(mean_reversion_signals["metrics"]),
-                },
-                "momentum": {
-                    "signal": momentum_signals["signal"],
-                    "confidence": round(momentum_signals["confidence"] * 100),
-                    "metrics": normalize_pandas(momentum_signals["metrics"]),
-                },
-                "volatility": {
-                    "signal": volatility_signals["signal"],
-                    "confidence": round(volatility_signals["confidence"] * 100),
-                    "metrics": normalize_pandas(volatility_signals["metrics"]),
-                },
-                "statistical_arbitrage": {
-                    "signal": stat_arb_signals["signal"],
-                    "confidence": round(stat_arb_signals["confidence"] * 100),
-                    "metrics": normalize_pandas(stat_arb_signals["metrics"]),
-                },
-            },
-        }
-        progress.update_status("technical_analyst_agent", ticker, "Done")
 
     # Create the technical analyst message
     message = HumanMessage(

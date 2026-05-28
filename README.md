@@ -12,7 +12,8 @@ This system employs several agents working together:
 6. Risk Manager - Calculates risk metrics and sets position limits
 7. Portfolio Manager - Makes final trading decisions and generates orders
    
-<img width="1060" alt="Screenshot 2025-01-03 at 5 39 25 PM" src="https://github.com/user-attachments/assets/4611aace-27d0-43b2-9a70-385b40336e3f" />
+<img width="1060" alt="Screenshot 2025-01-03 at 5 39 25 PM" src="" />
+
 
 Note: the system simulates trading decisions, it does not actually trade.
 
@@ -31,14 +32,17 @@ This project is for **educational and research purposes only**.
 By using this software, you agree to use it solely for learning purposes.
 
 ## Table of Contents
-- [Setup](#setup)
-- [Usage](#usage)
-  - [Running the Hedge Fund](#running-the-hedge-fund)
-  - [Running the Backtester](#running-the-backtester)
-- [Project Structure](#project-structure)
-- [Contributing](#contributing)
-- [Feature Requests](#feature-requests)
-- [License](#license)
+- [AI Hedge Fund](#ai-hedge-fund)
+  - [Disclaimer](#disclaimer)
+  - [Table of Contents](#table-of-contents)
+  - [Setup](#setup)
+  - [Usage](#usage)
+    - [Running the Hedge Fund](#running-the-hedge-fund)
+    - [Running the Backtester](#running-the-backtester)
+  - [Project Structure](#project-structure)
+  - [Contributing](#contributing)
+  - [Feature Requests](#feature-requests)
+  - [License](#license)
 
 ## Setup
 
